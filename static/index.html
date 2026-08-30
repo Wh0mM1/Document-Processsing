@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinSight AI — Document Intelligence & Research Studio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js for interactive analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+              dark: '#0e2319',
+              accent: '#d97706',
+            },
+            surface: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              800: '#1e293b',
+              850: '#172033',
+              900: '#0f172a',
+              950: '#080d1a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #080d1a;
+      color: #f1f5f9;
+    }
+    .glass {
+      background: rgba(23, 32, 51, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-card:hover {
+      border-color: rgba(16, 185, 129, 0.35);
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.1);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.3);
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(16, 185, 129, 0.6);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="sticky top-0 z-40 glass border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Brand Logo & Badge -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="scrollToSection('hero')">
+          <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-900/40 text-slate-950 font-black text-xl">
+            FS
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-lg tracking-tight text-white">FinSight <span class="text-emerald-400">AI</span></span>
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800/60">Research Studio</span>
+            </div>
+            <p class="text-xs text-slate-400">Document Intelligence & Report Automation</p>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="hidden md:flex flex-1 max-w-md mx-8">
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <input 
+              type="text" 
+              id="globalSearchInput" 
+              placeholder="Search companies, metrics (Revenue, PAT), sectors, periods..." 
+              oninput="handleSearch(this.value)"
+              class="w-full pl-9 pr-4 py-1.5 text-sm bg-surface-900/80 border border-slate-700/80 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+            >
+          </div>
+        </div>
+
+        <!-- Quick Actions & Status -->
+        <div class="flex items-center space-x-3">
+          <div class="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-surface-900 border border-slate-700/60 text-xs text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="systemStatusText">Ready</span>
+          </div>
+
+          <button 
+            onclick="scrollToSection('upload-section')"
+            class="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-900/30 transition-all duration-150 transform hover:-translate-y-0.5"
+          >
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>Upload File</span>
+          </button>
+
+          <!-- Clear All Data Button -->
+          <button 
+            onclick="promptClearAllData()"
+            class="p-2 rounded-lg bg-surface-850 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 transition"
+            title="Clear all stored documents and reports"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- HERO & OVERVIEW STATS -->
+    <section id="hero" class="space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Financial Research & Report Dashboard
+          </h1>
+          <p class="text-sm text-slate-400 mt-1">
+            Extract verified financials, structure multi-period tables, and preview generated research reports directly in your browser.
+          </p>
+        </div>
+
+        <!-- Refresh Button -->
+        <button 
+          onclick="fetchReports(true)" 
+          class="self-start md:self-auto flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-850 hover:bg-surface-800 border border-slate-700/80 text-xs text-slate-300 hover:text-white transition"
+        >
+          <i data-lucide="refresh-cw" id="refreshIcon" class="w-3.5 h-3.5"></i>
+          <span>Refresh Data</span>
+        </button>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400 text-xs">
+            <span>Uploaded Documents</span>
+            <i data-lucide="files" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span class="text-2xl font-bold text-white" id="statUniqueDocs">0</span>
+            <span class="text-[10px] text-emerald-400">In Storage</span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400 text-xs">
+            <span>Active Reports</span>
+            <i data-lucide="file-check-2" class="w-4 h-4 text-teal-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span class="text-2xl font-bold text-white" id="statTotalRuns">0</span>
+            <span class="text-[10px] text-slate-400">Latest Versions</span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400 text-xs">
+            <span>Extracted Tables</span>
+            <i data-lucide="table-2" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span class="text-2xl font-bold text-white" id="statExtractedTables">0</span>
+            <span class="text-[10px] text-amber-400">Normalized</span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-slate-400 text-xs">
+            <span>Verified Status</span>
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i>
+          </div>
+          <div class="mt-2 flex items-baseline space-x-2">
+            <span class="text-2xl font-bold text-white" id="statIndexedChunks">0</span>
+            <span class="text-[10px] text-blue-400">Indexed</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- UPLOAD & PIPELINE PROCESSING SECTION -->
+    <section id="upload-section" class="glass rounded-2xl p-6 relative overflow-hidden border border-slate-800">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-800/60">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white">Process New Document</h2>
+            <p class="text-xs text-slate-400">Upload Investor Presentations, Annual Reports, or Financial Statements (PDF)</p>
+          </div>
+        </div>
+        <span class="text-xs text-slate-400 hidden sm:inline-block">Duplicate uploads automatically override older reports</span>
+      </div>
+
+      <!-- Drag & Drop Zone -->
+      <div 
+        id="dropZone"
+        ondragover="handleDragOver(event)"
+        ondragleave="handleDragLeave(event)"
+        ondrop="handleFileDrop(event)"
+        onclick="document.getElementById('fileInput').click()"
+        class="border-2 border-dashed border-slate-700/80 hover:border-emerald-500/80 bg-surface-900/50 hover:bg-surface-850/60 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 group"
+      >
+        <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileSelected(event)">
+        
+        <div class="flex flex-col items-center justify-center space-y-3">
+          <div class="w-14 h-14 rounded-2xl bg-surface-800 group-hover:bg-emerald-950 border border-slate-700 group-hover:border-emerald-600/50 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 transition-colors">
+            <i data-lucide="upload-cloud" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-slate-200">
+              Click to browse or drag & drop PDF file here
+            </p>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Supports earnings slide decks, reports, quarterly disclosures up to 100MB
+            </p>
+          </div>
+          <div id="selectedFileInfo" class="hidden items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-700 text-xs text-emerald-300 font-medium">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            <span id="selectedFileName">file.pdf</span>
+            <span id="selectedFileSize" class="text-emerald-400/80 text-[11px]">(0 KB)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Trigger Button & Actions -->
+      <div id="uploadActions" class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 hidden">
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+          <button 
+            id="startUploadBtn" 
+            onclick="startProcessing()"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-900/40 flex items-center justify-center space-x-2 transition"
+          >
+            <i data-lucide="cpu" class="w-4 h-4"></i>
+            <span>Run Pipeline Analysis</span>
+          </button>
+          <button 
+            onclick="cancelUploadSelection()"
+            class="px-4 py-2.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-300 text-sm font-medium transition"
+          >
+            Cancel
+          </button>
+        </div>
+        <p class="text-xs text-slate-400 text-center sm:text-right">
+          Overwrites any previous report version for this document.
+        </p>
+      </div>
+
+      <!-- Processing Progress Box -->
+      <div id="pipelineProgressBox" class="mt-4 p-5 rounded-xl bg-surface-900 border border-slate-700/80 hidden space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+            <div>
+              <h4 class="text-sm font-semibold text-white" id="progressStatusTitle">Running LangGraph Research Pipeline...</h4>
+              <p class="text-xs text-slate-400" id="progressStatusDetail">Ingesting document, parsing tables & calculating layout...</p>
+            </div>
+          </div>
+          <span class="text-xs font-mono text-emerald-400" id="progressTime">Processing...</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 text-[11px]">
+          <div class="p-2 rounded bg-surface-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5" id="step1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>1. Ingest & OCR</span>
+          </div>
+          <div class="p-2 rounded bg-surface-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5" id="step2">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span>2. Extract Tables</span>
+          </div>
+          <div class="p-2 rounded bg-surface-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5" id="step3">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span>3. Hybrid Retrieve</span>
+          </div>
+          <div class="p-2 rounded bg-surface-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5" id="step4">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span>4. Fact Verify</span>
+          </div>
+          <div class="p-2 rounded bg-surface-800 border border-slate-700 text-slate-300 flex items-center space-x-1.5" id="step5">
+            <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <span>5. Generate PDF</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTS HUB & CATALOG -->
+    <section id="reports-catalog" class="space-y-4">
+      
+      <!-- Filter & View Controls -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <span>Generated Research Reports</span>
+            <span class="text-xs font-normal text-slate-400 bg-surface-800 px-2 py-0.5 rounded-full border border-slate-700" id="reportsCountBadge">0 files</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Showing only documents present in uploads. Duplicate uploads overwrite older reports with the latest version.
+          </p>
+        </div>
+
+        <!-- Filter Chips & View Mode Switcher -->
+        <div class="flex items-center space-x-3 overflow-x-auto pb-1 sm:pb-0">
+          <div class="flex items-center space-x-1.5 bg-surface-900 p-1 rounded-lg border border-slate-800 text-xs">
+            <button onclick="setFilter('all')" id="filter-all" class="px-2.5 py-1 rounded font-medium bg-emerald-950 text-emerald-300 border border-emerald-800/80 transition">All</button>
+            <button onclick="setFilter('complete')" id="filter-complete" class="px-2.5 py-1 rounded font-medium text-slate-400 hover:text-slate-200 transition">Complete</button>
+            <button onclick="setFilter('needs_review')" id="filter-needs_review" class="px-2.5 py-1 rounded font-medium text-slate-400 hover:text-slate-200 transition">Needs Review</button>
+          </div>
+
+          <div class="flex items-center bg-surface-900 p-1 rounded-lg border border-slate-800 text-xs">
+            <button onclick="setViewMode('grid')" id="viewBtnGrid" class="p-1.5 rounded bg-surface-800 text-white" title="Grid View">
+              <i data-lucide="layout-grid" class="w-4 h-4"></i>
+            </button>
+            <button onclick="setViewMode('table')" id="viewBtnTable" class="p-1.5 rounded text-slate-400 hover:text-white" title="Table View">
+              <i data-lucide="list" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="reportsLoading" class="py-16 text-center">
+        <div class="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <p class="text-sm text-slate-400">Loading reports repository...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="reportsEmpty" class="hidden py-16 text-center glass rounded-xl border border-slate-800">
+        <i data-lucide="file-question" class="w-12 h-12 text-slate-500 mx-auto mb-3"></i>
+        <h3 class="text-base font-semibold text-white">No Uploaded Documents</h3>
+        <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Upload a PDF file above to process your first financial document and generate a research report.</p>
+      </div>
+
+      <!-- CARD GRID VIEW CONTAINER -->
+      <div id="reportsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- Populated via JavaScript -->
+      </div>
+
+      <!-- TABLE LIST VIEW CONTAINER -->
+      <div id="reportsTableContainer" class="hidden glass rounded-xl overflow-hidden border border-slate-800">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-surface-900 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Company & Document</th>
+                <th class="py-3 px-4">Period / Sector</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Key Metrics</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody" class="divide-y divide-slate-800/80">
+              <!-- Populated via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODALS & VIEWERS -->
+  <!-- ========================================================================= -->
+
+  <!-- 1. FULL INTERACTIVE REPORT MODAL -->
+  <div id="reportModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-surface-900 border border-slate-700/80 w-full max-w-5xl h-[92vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/60 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="h-10 w-10 rounded-xl bg-emerald-950 border border-emerald-700 flex items-center justify-center text-emerald-400 font-bold text-sm" id="modalCompanyInitials">
+            CO
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center space-x-2">
+              <span id="modalCompanyName">Company Name</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700" id="modalPeriodBadge">Q2-FY26</span>
+            </h3>
+            <p class="text-xs text-slate-400" id="modalSectorSubtitle">Financial Intelligence Report</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <!-- Download Button (Explicit download only) -->
+          <a id="modalDownloadPdfBtn" href="#" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center space-x-1.5 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download PDF</span>
+          </a>
+          <!-- Delete from inside modal -->
+          <button id="modalDeleteDocBtn" onclick="deleteActiveDocument()" class="p-1.5 rounded-lg bg-surface-800 hover:bg-rose-950/80 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 transition" title="Delete Document & Report">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+          <button onclick="closeModal('reportModal')" class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Tabs -->
+      <div class="flex items-center space-x-1 px-6 border-b border-slate-800 bg-surface-900/80 text-xs overflow-x-auto flex-shrink-0">
+        <button onclick="switchReportTab('overview')" id="tabBtn-overview" class="py-2.5 px-3 font-semibold text-emerald-400 border-b-2 border-emerald-400 transition">Executive Summary</button>
+        <button onclick="switchReportTab('tables')" id="tabBtn-tables" class="py-2.5 px-3 font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition">Financial Tables</button>
+        <button onclick="switchReportTab('charts')" id="tabBtn-charts" class="py-2.5 px-3 font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition">Visual Charts</button>
+        <button onclick="switchReportTab('pdf-embed')" id="tabBtn-pdf-embed" class="py-2.5 px-3 font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition">Generated PDF View</button>
+        <button onclick="switchReportTab('audit')" id="tabBtn-audit" class="py-2.5 px-3 font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition">Citation Audit</button>
+      </div>
+
+      <!-- Modal Content Body -->
+      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+        
+        <!-- TAB 1: EXECUTIVE SUMMARY -->
+        <div id="tabContent-overview" class="space-y-6">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-surface-850 border border-slate-800 text-xs" id="modalMetadataBox"></div>
+
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Executive Summary</h4>
+            <div class="p-4 rounded-xl bg-surface-850/80 border border-slate-800 text-sm text-slate-200 leading-relaxed" id="modalExecSummary">
+              Loading summary...
+            </div>
+          </div>
+
+          <div class="space-y-3" id="modalNarrativesContainer"></div>
+        </div>
+
+        <!-- TAB 2: FINANCIAL TABLES -->
+        <div id="tabContent-tables" class="hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Structured Financial Tables & Segment Data</h4>
+            <span class="text-xs text-slate-400">Extracted and normalized with citations</span>
+          </div>
+          <div id="modalTablesContainer" class="space-y-5"></div>
+        </div>
+
+        <!-- TAB 3: VISUAL CHARTS -->
+        <div id="tabContent-charts" class="hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Visual Insights & Trend Graphs</h4>
+            <span class="text-xs text-slate-400">Interactive financial performance series</span>
+          </div>
+          <div id="modalChartsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- TAB 4: GENERATED PDF EMBED -->
+        <div id="tabContent-pdf-embed" class="hidden h-[70vh] flex flex-col">
+          <div class="flex items-center justify-between mb-2 flex-shrink-0">
+            <span class="text-xs text-slate-400">Generated Research PDF Report</span>
+            <a id="modalDirectPdfLink" href="#" target="_blank" class="text-xs text-emerald-400 hover:underline flex items-center space-x-1">
+              <span>Open in new tab</span>
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+            </a>
+          </div>
+          <iframe id="modalReportPdfIframe" class="w-full flex-1 min-h-0 rounded-xl border border-slate-800 bg-white" src=""></iframe>
+        </div>
+
+        <!-- TAB 5: AUDIT & PROVENANCE -->
+        <div id="tabContent-audit" class="hidden space-y-4">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Observability & Citation Grounding</h4>
+          <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 space-y-3">
+            <div class="text-xs text-slate-300 space-y-1">
+              <p><b>Pipeline Status:</b> <span id="modalAuditStatus" class="text-emerald-400">Complete</span></p>
+              <p><b>Document SHA-256:</b> <span id="modalAuditDocId" class="font-mono text-slate-400">-</span></p>
+              <p><b>Run Identifier:</b> <span id="modalAuditRunId" class="font-mono text-slate-400">-</span></p>
+            </div>
+            <div class="pt-2 border-t border-slate-700/60">
+              <h5 class="text-xs font-semibold text-slate-300 mb-2">Quality & Verification Flags:</h5>
+              <ul id="modalQualityFlagsList" class="space-y-1 text-xs text-slate-400 list-disc list-inside"></ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ORIGINAL SOURCE PDF PREVIEW MODAL -->
+  <div id="originalPdfModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-surface-900 border border-slate-700/80 w-full max-w-5xl h-[92vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-surface-950/60 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 rounded-lg bg-slate-800 text-slate-300">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white" id="origPdfModalTitle">Original Source Document</h3>
+            <p class="text-xs text-slate-400" id="origPdfModalSubtitle">Raw uploaded PDF preview</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <!-- Download Button (Explicit download only) -->
+          <a id="origPdfModalDownloadBtn" href="#" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Download Original</span>
+          </a>
+          <button onclick="closeModal('originalPdfModal')" class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 min-h-0 p-3 bg-surface-950">
+        <iframe id="origPdfIframe" class="w-full h-full min-h-0 rounded-xl border border-slate-800 bg-white" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. SIDE-BY-SIDE DUAL COMPARATOR MODAL (Report vs Original PDF) -->
+  <div id="sideBySideModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-surface-900 border border-slate-700/80 w-full max-w-[98vw] h-[95vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div class="px-6 py-3 border-b border-slate-800 flex items-center justify-between bg-surface-950/80 flex-shrink-0">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="split" class="w-5 h-5 text-emerald-400"></i>
+          <h3 class="text-sm font-bold text-white">Side-by-Side Verification: Generated Report vs Original Document</h3>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="closeModal('sideBySideModal')" class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-400 hover:text-white transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-surface-950">
+        <!-- Left Pane: Generated Report -->
+        <div class="flex flex-col h-full min-h-0 rounded-xl border border-slate-800 bg-surface-900 overflow-hidden">
+          <div class="px-4 py-2 bg-emerald-950/60 border-b border-emerald-900/60 flex items-center justify-between text-xs font-semibold text-emerald-300 flex-shrink-0">
+            <div class="flex items-center space-x-1.5">
+              <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
+              <span>Generated Research Report</span>
+            </div>
+            <a id="sbsReportLink" href="#" class="flex items-center space-x-1 hover:underline text-[11px] text-emerald-400">
+              <i data-lucide="download" class="w-3 h-3"></i>
+              <span>Download PDF</span>
+            </a>
+          </div>
+          <iframe id="sbsReportIframe" class="w-full flex-1 h-full min-h-0 border-0 bg-white" src=""></iframe>
+        </div>
+
+        <!-- Right Pane: Original Source PDF -->
+        <div class="flex flex-col h-full min-h-0 rounded-xl border border-slate-800 bg-surface-900 overflow-hidden">
+          <div class="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-300 flex-shrink-0">
+            <div class="flex items-center space-x-1.5">
+              <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              <span>Original Source Document</span>
+            </div>
+            <a id="sbsSourceLink" href="#" target="_blank" class="flex items-center space-x-1 hover:underline text-[11px] text-slate-400">
+              <i data-lucide="external-link" class="w-3 h-3"></i>
+              <span>Open in Tab</span>
+            </a>
+          </div>
+          <iframe id="sbsSourceIframe" class="w-full flex-1 h-full min-h-0 border-0 bg-white" src=""></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. DELETE CONFIRMATION MODAL -->
+  <div id="deleteConfirmModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-surface-900 border border-slate-700/80 w-full max-w-md rounded-2xl flex flex-col overflow-hidden shadow-2xl p-6 space-y-4">
+      <div class="flex items-center space-x-3 text-rose-400">
+        <div class="p-2 rounded-xl bg-rose-950/80 border border-rose-800">
+          <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Delete Document</h3>
+          <p class="text-xs text-slate-400">Permanent removal of file & report</p>
+        </div>
+      </div>
+
+      <p class="text-sm text-slate-300" id="deleteModalMessage">
+        Are you sure you want to delete this document and its generated research report?
+      </p>
+
+      <div class="flex items-center justify-end space-x-3 pt-2">
+        <button 
+          onclick="closeModal('deleteConfirmModal')" 
+          class="px-4 py-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-300 text-xs font-semibold transition"
+        >
+          Cancel
+        </button>
+        <button 
+          id="confirmDeleteBtn"
+          onclick="executeDelete()" 
+          class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-900/40 transition"
+        >
+          Yes, Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800 py-6 mt-12 bg-surface-950/60 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
+        <div class="h-5 w-5 rounded bg-emerald-600 flex items-center justify-center text-slate-950 font-black text-xs">FS</div>
+        <span class="text-slate-300 font-semibold">FinSight AI Intelligence</span>
+        <span>· Evidence-Grounded Financial Processing</span>
+      </div>
+      <p class="text-slate-400">Automatic Document Deduplication · Zero-Hallucination Citations</p>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <!-- ========================================================================= -->
+  <script>
+    let state = {
+      documents: [],
+      filteredDocuments: [],
+      currentFilter: 'all',
+      searchQuery: '',
+      viewMode: 'grid',
+      selectedFile: null,
+      activeRunDetails: null,
+      documentToDelete: null,
+      chartInstances: []
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      fetchReports();
+      fetchStats();
+    });
+
+    function scrollToSection(id) {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats');
+        if (res.ok) {
+          const stats = await res.json();
+          document.getElementById('statUniqueDocs').innerText = stats.total_documents || 0;
+          document.getElementById('statTotalRuns').innerText = stats.total_reports || 0;
+          document.getElementById('statExtractedTables').innerText = stats.extracted_tables || 0;
+          document.getElementById('statIndexedChunks').innerText = stats.indexed_chunks || 0;
+        }
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+      }
+    }
+
+    async function fetchReports(showToast = false) {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon?.classList.add('animate-spin');
+      document.getElementById('reportsLoading')?.classList.remove('hidden');
+
+      try {
+        const res = await fetch('/api/reports');
+        if (res.ok) {
+          const data = await res.json();
+          state.documents = data.documents || [];
+          applyFiltersAndRender();
+          fetchStats();
+        }
+      } catch (err) {
+        console.error('Error fetching reports:', err);
+      } finally {
+        refreshIcon?.classList.remove('animate-spin');
+        document.getElementById('reportsLoading')?.classList.add('hidden');
+      }
+    }
+
+    function setFilter(filterKey) {
+      state.currentFilter = filterKey;
+      ['all', 'complete', 'needs_review'].forEach(k => {
+        const btn = document.getElementById(`filter-${k}`);
+        if (k === filterKey) {
+          btn.className = "px-2.5 py-1 rounded font-medium bg-emerald-950 text-emerald-300 border border-emerald-800/80 transition";
+        } else {
+          btn.className = "px-2.5 py-1 rounded font-medium text-slate-400 hover:text-slate-200 transition";
+        }
+      });
+      applyFiltersAndRender();
+    }
+
+    function handleSearch(query) {
+      state.searchQuery = (query || '').toLowerCase().trim();
+      applyFiltersAndRender();
+    }
+
+    function applyFiltersAndRender() {
+      state.filteredDocuments = state.documents.filter(doc => {
+        const latest = doc.latest_run || {};
+        
+        if (state.currentFilter !== 'all') {
+          if (latest.status !== state.currentFilter) return false;
+        }
+
+        if (state.searchQuery) {
+          const searchStr = `
+            ${doc.company_name || ''} 
+            ${doc.filename || ''} 
+            ${latest.sector || ''} 
+            ${latest.period || ''} 
+            ${latest.document_type || ''}
+            ${(latest.headline_metrics || []).map(m => m.label + ' ' + m.value).join(' ')}
+          `.toLowerCase();
+          if (!searchStr.includes(state.searchQuery)) return false;
+        }
+
+        return true;
+      });
+
+      document.getElementById('reportsCountBadge').innerText = `${state.filteredDocuments.length} document${state.filteredDocuments.length === 1 ? '' : 's'}`;
+      renderReports();
+    }
+
+    function setViewMode(mode) {
+      state.viewMode = mode;
+      const gridBtn = document.getElementById('viewBtnGrid');
+      const tableBtn = document.getElementById('viewBtnTable');
+      const gridContainer = document.getElementById('reportsGrid');
+      const tableContainer = document.getElementById('reportsTableContainer');
+
+      if (mode === 'grid') {
+        gridBtn.className = "p-1.5 rounded bg-surface-800 text-white";
+        tableBtn.className = "p-1.5 rounded text-slate-400 hover:text-white";
+        gridContainer.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+      } else {
+        gridBtn.className = "p-1.5 rounded text-slate-400 hover:text-white";
+        tableBtn.className = "p-1.5 rounded bg-surface-800 text-white";
+        gridContainer.classList.add('hidden');
+        tableContainer.classList.remove('hidden');
+      }
+      renderReports();
+    }
+
+    function renderReports() {
+      const grid = document.getElementById('reportsGrid');
+      const tableBody = document.getElementById('reportsTableBody');
+      const emptyState = document.getElementById('reportsEmpty');
+
+      if (!state.filteredDocuments.length) {
+        grid.innerHTML = '';
+        tableBody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      // 1. Grid Cards
+      grid.innerHTML = state.filteredDocuments.map(doc => {
+        const latest = doc.latest_run || {};
+        const isComplete = latest.status === 'complete';
+        const initials = (doc.company_name || 'CO').substring(0, 2).toUpperCase();
+
+        const metricsHtml = (latest.headline_metrics && latest.headline_metrics.length > 0)
+          ? latest.headline_metrics.map(m => `
+              <div class="px-2 py-1 rounded bg-surface-900 border border-slate-800 text-[11px] flex items-center justify-between">
+                <span class="text-slate-400">${escapeHtml(m.label)}</span>
+                <span class="font-semibold text-emerald-300 font-mono">${escapeHtml(m.value)}</span>
+              </div>
+            `).join('')
+          : `<div class="text-[11px] text-slate-400 italic">Financial highlights parsed in report</div>`;
+
+        return `
+          <div class="glass-card rounded-xl p-5 flex flex-col justify-between space-y-4 transition duration-200">
+            <div>
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                  <div class="h-11 w-11 rounded-xl bg-gradient-to-br from-surface-800 to-surface-900 border border-slate-700 flex items-center justify-center font-bold text-emerald-400 text-sm shadow-inner">
+                    ${initials}
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-white hover:text-emerald-300 transition cursor-pointer" onclick="openReportModal('${latest.run_id}')">
+                      ${escapeHtml(doc.company_name || doc.filename)}
+                    </h3>
+                    <div class="flex items-center space-x-2 mt-0.5">
+                      <span class="text-[11px] text-slate-400">${escapeHtml(latest.period || 'Latest')}</span>
+                      <span class="text-slate-600">·</span>
+                      <span class="text-[11px] text-slate-400 truncate max-w-[120px]">${escapeHtml(latest.sector || 'Financials')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                    ${isComplete ? 'Verified' : 'Review'}
+                  </span>
+                  <button 
+                    onclick="promptDeleteDocument('${doc.document_id}', '${escapeHtml(doc.company_name || doc.filename)}')" 
+                    class="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition" 
+                    title="Delete document and report"
+                  >
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between text-xs">
+                <span class="text-[11px] text-slate-400 truncate max-w-[180px]">${escapeHtml(doc.filename)}</span>
+                <span class="text-[11px] text-slate-400">${doc.page_count} Pages</span>
+              </div>
+
+              <div class="mt-3 grid grid-cols-2 gap-1.5">
+                ${metricsHtml}
+              </div>
+            </div>
+
+            <!-- Card Bottom Actions -->
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+              <!-- View Report: Opens in Modal (NO download) -->
+              <button 
+                type="button"
+                onclick="openReportModal('${latest.run_id}')"
+                class="flex-1 px-3 py-1.5 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center space-x-1.5 transition"
+              >
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                <span>View Report</span>
+              </button>
+
+              <!-- Explicit Download Button -->
+              <a 
+                href="${latest.download_url || latest.report_url + '?download=true'}" 
+                class="p-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-300 hover:text-white transition" 
+                title="Download Official PDF Report"
+              >
+                <i data-lucide="download" class="w-4 h-4"></i>
+              </a>
+
+              ${doc.has_original_pdf ? `
+                <!-- Preview Original Button -->
+                <button 
+                  type="button"
+                  onclick="openOriginalPdfModal('${doc.document_id}', '${escapeHtml(doc.filename)}')" 
+                  class="p-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-300 hover:text-white transition" 
+                  title="Preview Original Source Document PDF"
+                >
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Side-by-Side Comparator Button -->
+                <button 
+                  type="button"
+                  onclick="openSideBySideModal('${latest.run_id}', '${doc.document_id}')" 
+                  class="p-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-300 hover:text-white transition" 
+                  title="Side-by-Side Dual Preview"
+                >
+                  <i data-lucide="split" class="w-4 h-4"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 2. Table Rows
+      tableBody.innerHTML = state.filteredDocuments.map(doc => {
+        const latest = doc.latest_run || {};
+        const isComplete = latest.status === 'complete';
+
+        const metricsSummary = (latest.headline_metrics && latest.headline_metrics.length > 0)
+          ? latest.headline_metrics.map(m => `<span class="text-slate-400">${m.label}:</span> <b class="text-emerald-300 font-mono">${m.value}</b>`).join(' | ')
+          : 'Detailed in report';
+
+        return `
+          <tr class="hover:bg-surface-850/50 transition">
+            <td class="py-3 px-4">
+              <div class="font-bold text-white cursor-pointer hover:text-emerald-400" onclick="openReportModal('${latest.run_id}')">
+                ${escapeHtml(doc.company_name || doc.filename)}
+              </div>
+              <div class="text-[11px] text-slate-400 truncate max-w-xs">${escapeHtml(doc.filename)}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div>${escapeHtml(latest.period || '-')}</div>
+              <div class="text-[11px] text-slate-400">${escapeHtml(latest.sector || '-')}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
+                ${isComplete ? 'Complete' : 'Needs Review'}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-[11px] max-w-xs truncate">
+              ${metricsSummary}
+            </td>
+            <td class="py-3 px-4 text-right">
+              <div class="flex items-center justify-end space-x-1.5">
+                <button onclick="openReportModal('${latest.run_id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold">
+                  Report
+                </button>
+                <a href="${latest.download_url || latest.report_url + '?download=true'}" class="p-1.5 bg-surface-800 hover:bg-surface-700 text-slate-300 rounded" title="Download PDF">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                </a>
+                ${doc.has_original_pdf ? `
+                  <button onclick="openOriginalPdfModal('${doc.document_id}', '${escapeHtml(doc.filename)}')" class="p-1.5 bg-surface-800 hover:bg-surface-700 text-slate-300 rounded" title="Preview Original">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="openSideBySideModal('${latest.run_id}', '${doc.document_id}')" class="p-1.5 bg-surface-800 hover:bg-surface-700 text-slate-300 rounded" title="Side-by-Side">
+                    <i data-lucide="split" class="w-3.5 h-3.5"></i>
+                  </button>
+                ` : ''}
+                <button onclick="promptDeleteDocument('${doc.document_id}', '${escapeHtml(doc.company_name || doc.filename)}')" class="p-1.5 bg-surface-800 hover:bg-rose-950/80 text-slate-400 hover:text-rose-400 rounded" title="Delete">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // =========================================================================
+    // UPLOAD & PROCESSING HANDLERS
+    // =========================================================================
+
+    function handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (file) handleFile(file);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById('dropZone')?.classList.add('border-emerald-500', 'bg-surface-850');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      document.getElementById('dropZone')?.classList.remove('border-emerald-500', 'bg-surface-850');
+    }
+
+    function handleFileDrop(e) {
+      e.preventDefault();
+      document.getElementById('dropZone')?.classList.remove('border-emerald-500', 'bg-surface-850');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        handleFile(file);
+      } else {
+        alert('Please drop a valid PDF file.');
+      }
+    }
+
+    function handleFile(file) {
+      state.selectedFile = file;
+      document.getElementById('selectedFileName').innerText = file.name;
+      document.getElementById('selectedFileSize').innerText = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+      document.getElementById('selectedFileInfo').classList.remove('hidden');
+      document.getElementById('selectedFileInfo').classList.add('inline-flex');
+      document.getElementById('uploadActions').classList.remove('hidden');
+    }
+
+    function cancelUploadSelection() {
+      state.selectedFile = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('selectedFileInfo').classList.add('hidden');
+      document.getElementById('uploadActions').classList.add('hidden');
+    }
+
+    async function startProcessing() {
+      if (!state.selectedFile) return;
+
+      const formData = new FormData();
+      formData.append('file', state.selectedFile);
+
+      document.getElementById('uploadActions').classList.add('hidden');
+      document.getElementById('pipelineProgressBox').classList.remove('hidden');
+
+      let step = 1;
+      const stepInterval = setInterval(() => {
+        if (step <= 5) {
+          const prev = document.getElementById(`step${step}`);
+          if (prev) prev.classList.add('bg-emerald-950/60', 'border-emerald-800', 'text-emerald-300');
+          step++;
+        }
+      }, 1800);
+
+      try {
+        const res = await fetch('/api/uploads', {
+          method: 'POST',
+          body: formData
+        });
+
+        clearInterval(stepInterval);
+
+        if (res.ok) {
+          const result = await res.json();
+          document.getElementById('pipelineProgressBox').classList.add('hidden');
+          cancelUploadSelection();
+          await fetchReports();
+          
+          if (result.run_id) {
+            openReportModal(result.run_id);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          alert(`Processing failed: ${err.detail || 'Server error'}`);
+          document.getElementById('pipelineProgressBox').classList.add('hidden');
+          document.getElementById('uploadActions').classList.remove('hidden');
+        }
+      } catch (err) {
+        clearInterval(stepInterval);
+        console.error('Error during upload:', err);
+        alert('Network or processing error during document pipeline execution.');
+        document.getElementById('pipelineProgressBox').classList.add('hidden');
+        document.getElementById('uploadActions').classList.remove('hidden');
+      }
+    }
+
+    // =========================================================================
+    // DELETE & CLEAR ALL HANDLERS
+    // =========================================================================
+
+    function promptDeleteDocument(documentId, docName) {
+      state.documentToDelete = documentId;
+      document.getElementById('deleteModalMessage').innerText = `Are you sure you want to delete "${docName}"? This will remove the source PDF, extracted facts, and its generated research report.`;
+      document.getElementById('deleteConfirmModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function deleteActiveDocument() {
+      if (!state.activeRunDetails) return;
+      const docId = state.activeRunDetails.document_id;
+      const company = state.activeRunDetails.data?.business_context?.company || 'this document';
+      closeModal('reportModal');
+      promptDeleteDocument(docId, company);
+    }
+
+    async function executeDelete() {
+      if (!state.documentToDelete) return;
+      const docId = state.documentToDelete;
+      closeModal('deleteConfirmModal');
+
+      try {
+        const res = await fetch(`/api/documents/${docId}`, { method: 'DELETE' });
+        if (res.ok) {
+          state.documentToDelete = null;
+          await fetchReports();
+        } else {
+          alert('Failed to delete document from server.');
+        }
+      } catch (err) {
+        console.error('Error deleting document:', err);
+        alert('Error communicating with server.');
+      }
+    }
+
+    async function promptClearAllData() {
+      if (confirm('Are you sure you want to clear ALL uploaded documents, extracted data, and generated reports from the system? This action cannot be undone.')) {
+        try {
+          const res = await fetch('/api/clear-all', { method: 'POST' });
+          if (res.ok) {
+            await fetchReports();
+          } else {
+            alert('Failed to clear database.');
+          }
+        } catch (err) {
+          console.error('Error clearing data:', err);
+        }
+      }
+    }
+
+    // =========================================================================
+    // MODAL HANDLERS
+    // =========================================================================
+
+    function closeModal(modalId) {
+      document.getElementById(modalId)?.classList.add('hidden');
+      if (modalId === 'reportModal') {
+        document.getElementById('modalReportPdfIframe').src = '';
+      } else if (modalId === 'originalPdfModal') {
+        document.getElementById('origPdfIframe').src = '';
+      } else if (modalId === 'sideBySideModal') {
+        document.getElementById('sbsReportIframe').src = '';
+        document.getElementById('sbsSourceIframe').src = '';
+      }
+    }
+
+    // 1. OPEN REPORT MODAL (Opens Interactive UI, does NOT trigger automatic download)
+    async function openReportModal(runId) {
+      const modal = document.getElementById('reportModal');
+      modal.classList.remove('hidden');
+      switchReportTab('overview');
+
+      try {
+        const res = await fetch(`/api/reports/${runId}/summary`);
+        if (res.ok) {
+          const payload = await res.json();
+          state.activeRunDetails = payload;
+          populateReportModal(payload);
+        }
+      } catch (err) {
+        console.error('Error fetching report summary:', err);
+      }
+    }
+
+    function populateReportModal(payload) {
+      const data = payload.data || {};
+      const ctx = data.business_context || {};
+      const mapping = data.template_mapping || {};
+      const llmSum = data.llm_summary || {};
+
+      const company = ctx.company || data.company_name || 'Company Research Report';
+      document.getElementById('modalCompanyName').innerText = company;
+      document.getElementById('modalCompanyInitials').innerText = company.substring(0, 2).toUpperCase();
+      document.getElementById('modalPeriodBadge').innerText = ctx.period || 'Latest Disclosures';
+      document.getElementById('modalSectorSubtitle').innerText = `${ctx.sector || 'Financial Analysis'} · ${ctx.document_type || 'Filing'}`;
+
+      // PDF links: Inline for iframe view, download=true for explicit download button
+      const inlinePdfUrl = `/api/reports/${payload.run_id}`;
+      const downloadPdfUrl = `/api/reports/${payload.run_id}?download=true`;
+
+      document.getElementById('modalDownloadPdfBtn').href = downloadPdfUrl;
+      document.getElementById('modalDirectPdfLink').href = inlinePdfUrl;
+      document.getElementById('modalReportPdfIframe').src = inlinePdfUrl;
+
+      // Metadata Box (Zero Hallucination display)
+      const targetVal = mapping.target_price?.value || 'N/A';
+      const ratingVal = mapping.recommendation_rating?.value || 'N/A';
+      const cmpVal = mapping.current_market_price?.value || 'N/A';
+      const mcapVal = mapping.market_cap?.value || 'N/A';
+
+      document.getElementById('modalMetadataBox').innerHTML = `
+        <div><span class="text-slate-400">Target Price:</span> <b class="text-white ml-1">${escapeHtml(targetVal)}</b></div>
+        <div><span class="text-slate-400">Rating:</span> <b class="text-emerald-400 ml-1">${escapeHtml(ratingVal)}</b></div>
+        <div><span class="text-slate-400">Current Price (CMP):</span> <b class="text-white ml-1">${escapeHtml(cmpVal)}</b></div>
+        <div><span class="text-slate-400">Market Cap:</span> <b class="text-white ml-1">${escapeHtml(mcapVal)}</b></div>
+      `;
+
+      // Executive Summary
+      const execText = llmSum.executive_summary || llmSum.text || (data.narrative_sections && data.narrative_sections[0]?.title) || 'No narrative text generated.';
+      document.getElementById('modalExecSummary').innerText = execText;
+
+      // Narrative Sections
+      const narratives = data.narrative_sections || [];
+      document.getElementById('modalNarrativesContainer').innerHTML = narratives.map(sec => `
+        <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 space-y-2">
+          <h5 class="text-xs font-bold text-emerald-400 uppercase tracking-wide">${escapeHtml(sec.title || 'Section Highlights')}</h5>
+          ${(sec.blocks || []).map(b => `<p class="text-xs text-slate-300 pl-2 border-l-2 border-slate-700">· ${escapeHtml(b.text || b)}</p>`).join('')}
+        </div>
+      `).join('');
+
+      // Tables Tab
+      const tables = data.structured_data || [];
+      const tablesContainer = document.getElementById('modalTablesContainer');
+      if (tables.length > 0) {
+        tablesContainer.innerHTML = `
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left text-xs text-slate-200">
+              <thead class="bg-surface-950 text-slate-400 uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th class="py-2.5 px-4">Financial Metric</th>
+                  <th class="py-2.5 px-4">Reported Value</th>
+                  <th class="py-2.5 px-4">Period</th>
+                  <th class="py-2.5 px-4">YoY Growth</th>
+                  <th class="py-2.5 px-4">Source Page</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800 bg-surface-850">
+                ${tables.map(t => `
+                  <tr class="hover:bg-surface-800/60 transition">
+                    <td class="py-2 px-4 font-semibold text-white">${escapeHtml(String(t.metric || t.label || '').replace(/_/g, ' ').toUpperCase())}</td>
+                    <td class="py-2 px-4 font-mono text-emerald-300 font-bold">${escapeHtml(String(t.value || '-'))}</td>
+                    <td class="py-2 px-4 text-slate-300">${escapeHtml(String(t.period || '-'))}</td>
+                    <td class="py-2 px-4 text-slate-400">${escapeHtml(String(t.growth || '-'))}</td>
+                    <td class="py-2 px-4 font-mono text-slate-400">Page ${t.citation?.page || t.source_page || '-'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        tablesContainer.innerHTML = `<p class="text-xs text-slate-400 italic">No structured tabular data available.</p>`;
+      }
+
+      // Charts Tab
+      renderModalCharts(data.chart_specs || []);
+
+      // Audit Tab
+      document.getElementById('modalAuditStatus').innerText = payload.status || 'complete';
+      document.getElementById('modalAuditDocId').innerText = payload.document_id || '-';
+      document.getElementById('modalAuditRunId').innerText = payload.run_id || '-';
+      const flags = data.quality_flags || [];
+      document.getElementById('modalQualityFlagsList').innerHTML = flags.length 
+        ? flags.map(f => `<li>${escapeHtml(f)}</li>`).join('')
+        : `<li class="text-emerald-400 list-none">✓ No verification quality flags raised. All facts grounded.</li>`;
+
+      lucide.createIcons();
+    }
+
+    function switchReportTab(tabName) {
+      ['overview', 'tables', 'charts', 'pdf-embed', 'audit'].forEach(t => {
+        const btn = document.getElementById(`tabBtn-${t}`);
+        const content = document.getElementById(`tabContent-${t}`);
+        if (t === tabName) {
+          btn.className = "py-2.5 px-3 font-semibold text-emerald-400 border-b-2 border-emerald-400 transition";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "py-2.5 px-3 font-medium text-slate-400 hover:text-white border-b-2 border-transparent transition";
+          content.classList.add('hidden');
+        }
+      });
+    }
+
+    function renderModalCharts(chartSpecs) {
+      const container = document.getElementById('modalChartsContainer');
+      state.chartInstances.forEach(c => c.destroy());
+      state.chartInstances = [];
+
+      if (!chartSpecs || !chartSpecs.length) {
+        container.innerHTML = `<p class="text-xs text-slate-400 italic col-span-2">No vector chart series available.</p>`;
+        return;
+      }
+
+      container.innerHTML = chartSpecs.map((spec, i) => `
+        <div class="p-4 rounded-xl bg-surface-850 border border-slate-800 space-y-2">
+          <h5 class="text-xs font-bold text-white">${escapeHtml(spec.title || `Chart Series ${i+1}`)}</h5>
+          <div class="h-48 relative">
+            <canvas id="chartCanvas_${i}"></canvas>
+          </div>
+          ${spec.rationale ? `<p class="text-[11px] text-slate-400 italic mt-1">${escapeHtml(spec.rationale)}</p>` : ''}
+        </div>
+      `).join('');
+
+      setTimeout(() => {
+        chartSpecs.forEach((spec, i) => {
+          const canvas = document.getElementById(`chartCanvas_${i}`);
+          if (!canvas) return;
+          const points = spec.points || [];
+          const labels = points.map(p => p.period || '');
+          const values = points.map(p => parseFloat(p.value) || 0);
+
+          const chart = new Chart(canvas, {
+            type: spec.chart_type === 'line' ? 'line' : 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: spec.metric || 'Metric',
+                data: values,
+                backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                borderColor: '#10b981',
+                borderWidth: 2,
+                borderRadius: 4,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: {
+                  grid: { color: 'rgba(255,255,255,0.05)' },
+                  ticks: { color: '#94a3b8', font: { size: 10 } }
+                },
+                y: {
+                  grid: { color: 'rgba(255,255,255,0.05)' },
+                  ticks: { color: '#94a3b8', font: { size: 10 } }
+                }
+              }
+            }
+          });
+          state.chartInstances.push(chart);
+        });
+      }, 50);
+    }
+
+    // 2. OPEN ORIGINAL PDF MODAL
+    function openOriginalPdfModal(documentId, filename) {
+      document.getElementById('origPdfModalTitle').innerText = filename || 'Original Source Document';
+      document.getElementById('origPdfModalSubtitle').innerText = `Document ID: ${documentId.substring(0, 16)}...`;
+      
+      const inlineUrl = `/api/documents/${documentId}/pdf`;
+      const downloadUrl = `/api/documents/${documentId}/pdf?download=true`;
+
+      document.getElementById('origPdfModalDownloadBtn').href = downloadUrl;
+      document.getElementById('origPdfIframe').src = inlineUrl;
+      document.getElementById('originalPdfModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    // 3. OPEN SIDE-BY-SIDE DUAL COMPARATOR
+    function openSideBySideModal(runId, documentId) {
+      const inlineReportUrl = `/api/reports/${runId}`;
+      const downloadReportUrl = `/api/reports/${runId}?download=true`;
+      const inlineSourceUrl = `/api/documents/${documentId}/pdf`;
+
+      document.getElementById('sbsReportLink').href = downloadReportUrl;
+      document.getElementById('sbsSourceLink').href = inlineSourceUrl;
+
+      document.getElementById('sbsReportIframe').src = inlineReportUrl;
+      document.getElementById('sbsSourceIframe').src = inlineSourceUrl;
+
+      document.getElementById('sideBySideModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

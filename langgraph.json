@@ -1,8 +1,8 @@
 {
   "$schema": "https://langgra.ph/schema.json",
   "dependencies": ["."],
-  "graphs": {"financial_research": "finsight_agent.graph:graph"},
+  "graphs": {"financial_research": "finsight_agent.pipeline.graph:graph"},
   "env": ".env",
-  "http": {"app": "finsight_agent.server:app"},
+  "http": {"app": "finsight_agent.api.server:app"},
   "python_version": "3.13"
 }

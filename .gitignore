@@ -1,0 +1,45 @@
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# LangGraph Local API & State Checkpoints
+.langgraph_api/
+.langgraph/
+
+# Test & Coverage Artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Data & Output Artifacts
+data/
+output/
+
+# macOS / OS Metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
