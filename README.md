@@ -14,10 +14,40 @@
    - Only documents physically present in uploaded storage are displayed.
    - Duplicate uploads automatically override older reports so only a single original file and single latest report are retained.
    - One-click document and report deletion with full database cleanup.
+6. **Isolated Docker Containerization**: Complete multi-container orchestration with Docker Compose — runs local LLMs (Ollama) and the application in complete isolation.
 
 ---
 
-## Quick Start
+## Quick Start (Docker & Docker Compose)
+
+The fastest and most isolated way to run FinSight AI (with local LLM models automatically managed) is using **Docker Compose**:
+
+### 1. Launch with Docker Compose
+
+```bash
+# Build and start all services in isolation
+docker compose up --build
+```
+
+### 2. How the Orchestration Works
+
+1. **`ollama` service starts first**: Starts the local Ollama LLM runtime and performs health checks.
+2. **`ollama-init` service runs**: Automatically pulls the `llama3.2` text model and `llama3.2-vision` multimodal model into persistent storage.
+3. **`app` service starts**: Once models are verified and ready, the FinSight AI backend and modern Web UI start up on port `8000`.
+
+Open your browser and navigate to:
+👉 **[http://localhost:8000](http://localhost:8000)**
+
+### 3. Stopping the Services
+
+```bash
+# Stop containers (preserves downloaded models and uploaded document data)
+docker compose down
+```
+
+---
+
+## Local Development (Without Docker)
 
 ### 1. Installation & Environment Setup
 
@@ -47,9 +77,7 @@ uv run python main.py
 uvicorn finsight_agent.api.server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Open your browser and navigate to:
-👉 **[http://localhost:8000](http://localhost:8000)**
-
+Open your browser at **[http://localhost:8000](http://localhost:8000)**.
 Interactive API documentation (Swagger UI) is available at **[http://localhost:8000/docs](http://localhost:8000/docs)**.
 
 ### 3. Command-Line Processing (CLI)
@@ -62,11 +90,11 @@ python -m finsight_agent.cli path/to/presentation.pdf --pdf output/report.pdf
 
 ---
 
-## Running Local LLM & Vision Models
+## Running Local LLM & Vision Models (Host Mode)
 
 FinSight AI is built to run **100% locally, privately, and offline** with zero external API costs using open-source models.
 
-### Setting up Local Models with Ollama (Recommended)
+### Setting up Local Models with Ollama (Host Mode)
 
 1. **Install Ollama**:
    - macOS / Linux / Windows: Download from [ollama.com](https://ollama.com) or run `brew install ollama` (macOS).
@@ -112,24 +140,31 @@ FinSight AI is built to run **100% locally, privately, and offline** with zero e
 ## Project Structure
 
 ```
-finsight_agent/
-├── core/        # Pydantic data contracts, LangGraph state, system prompts
-├── ingestion/   # PDF parsing, raster filtering, vector charts, markdown tables, chunking, embeddings
-├── analysis/    # Context detection, table fact extraction, arithmetic validation, trend chart planning
-├── output/      # Template mapping, narrative synthesis, ReportLab PDF report renderer
-├── pipeline/    # LangGraph pipeline definition and execution nodes
-├── storage/     # Thread-safe SQLite document, chunk, and run store
-├── api/         # FastAPI REST API & static web serving
-└── cli.py       # Command-line interface
-
-static/
-└── index.html   # Modern Web UI (Tailwind CSS, Lucide icons, Chart.js)
-
-data/
-├── uploads/     # Single original source PDF files
-├── reports/     # Generated publication-ready PDF research reports
-├── documents/   # Document page assets, vector charts, and manifests
-└── finsight.sqlite3 # Persistent SQLite database
+├── Dockerfile       # Production multi-stage Dockerfile with Tesseract OCR & PyMuPDF
+├── docker-compose.yml # Complete service orchestration (Ollama + Model Puller + App)
+├── .dockerignore    # Docker build ignore rules
+├── pyproject.toml   # Project dependencies & packaging config
+├── requirements.txt # Dependency specifications
+├── main.py          # Application launcher
+│
+├── finsight_agent/
+│   ├── core/        # Pydantic data contracts, LangGraph state, system prompts
+│   ├── ingestion/   # PDF parsing, raster filtering, vector charts, markdown tables, chunking, embeddings
+│   ├── analysis/    # Context detection, table fact extraction, arithmetic validation, trend chart planning
+│   ├── output/      # Template mapping, narrative synthesis, ReportLab PDF report renderer
+│   ├── pipeline/    # LangGraph pipeline definition and execution nodes
+│   ├── storage/     # Thread-safe SQLite document, chunk, and run store
+│   ├── api/         # FastAPI REST API & static web serving
+│   └── cli.py       # Command-line interface
+│
+├── static/
+│   └── index.html   # Modern Web UI (Tailwind CSS, Lucide icons, Chart.js)
+│
+└── data/
+    ├── uploads/     # Single original source PDF files
+    ├── reports/     # Generated publication-ready PDF research reports
+    ├── documents/   # Document page assets, vector charts, and manifests
+    └── finsight.sqlite3 # Persistent SQLite database
 ```
 
 ---
