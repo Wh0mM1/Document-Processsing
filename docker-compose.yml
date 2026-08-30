@@ -1,0 +1,83 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Local LLM & Embeddings Service (Ollama)
+  # ----------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: finsight-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # 2. Automated Model Puller (Downloads models from .env into Ollama)
+  # ----------------------------------------------------------------------------
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: finsight-model-puller
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - LLM_MODEL=${FINSIGHT_LLM_MODEL:-qwen2.5:3b}
+      - EMBED_MODEL=${FINSIGHT_EMBEDDING_MODEL:-nomic-embed-text}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "==> Connected to Ollama at $$OLLAMA_HOST"
+        echo "==> Pulling LLM model: $$LLM_MODEL"
+        ollama pull "$$LLM_MODEL"
+        echo "==> Pulling Embeddings model: $$EMBED_MODEL"
+        ollama pull "$$EMBED_MODEL"
+        echo "==> All models ready. Starting FinSight AI application..."
+    restart: "no"
+
+  # ----------------------------------------------------------------------------
+  # 3. FinSight AI Application (Backend + Modern Web UI)
+  # ----------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finsight-app
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    environment:
+      - FINSIGHT_LLM_PROVIDER=${FINSIGHT_LLM_PROVIDER:-openai_compatible}
+      - FINSIGHT_LLM_MODEL=${FINSIGHT_LLM_MODEL:-qwen2.5:3b}
+      - FINSIGHT_LLM_BASE_URL=http://ollama:11434/v1
+      - FINSIGHT_LLM_API_KEY=${FINSIGHT_LLM_API_KEY:-ollama}
+      - FINSIGHT_EMBEDDINGS=${FINSIGHT_EMBEDDINGS:-ollama}
+      - FINSIGHT_EMBEDDING_MODEL=${FINSIGHT_EMBEDDING_MODEL:-nomic-embed-text}
+      - FINSIGHT_EMBEDDING_BASE_URL=http://ollama:11434
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY:-}
+      - PORT=8000
+      - HOST=0.0.0.0
+    volumes:
+      # Persistent storage for uploaded PDFs, reports, and SQLite database
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/stats || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+    name: finsight_ollama_data

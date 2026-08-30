@@ -69,6 +69,21 @@ class SQLiteResearchStore:
             self.connection.execute(
                 'INSERT INTO runs VALUES (?,?,?,?)', (run, doc, status, json.dumps(result)))
 
+    def update_run_status(self, run, status):
+        """Manually update the verification status of a run (e.g. human-in-the-loop review)."""
+        with self._lock, self.connection:
+            row = self.connection.execute('SELECT result FROM runs WHERE id=?', (run,)).fetchone()
+            if row and row['result']:
+                try:
+                    res = json.loads(row['result'])
+                    res['status'] = status
+                    self.connection.execute(
+                        'UPDATE runs SET status=?, result=? WHERE id=?', (status, json.dumps(res), run))
+                except Exception:
+                    self.connection.execute('UPDATE runs SET status=? WHERE id=?', (status, run))
+            else:
+                self.connection.execute('UPDATE runs SET status=? WHERE id=?', (status, run))
+
     def delete_document(self, doc):
         """Completely remove all database entries associated with a document."""
         with self._lock, self.connection:

@@ -39,7 +39,7 @@ def table_to_markdown(rows: list[list[str]]) -> str:
 
 def analyse_pdf(path, archive_root='data/documents'):
     """Preserve a source PDF as pages, layout, table candidates, visuals and prose."""
-    import fitz
+    import pymupdf as fitz
     import pdfplumber
     source = Path(path).expanduser().resolve()
     document_id = hashlib.sha256(source.read_bytes()).hexdigest()

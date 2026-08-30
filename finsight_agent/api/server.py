@@ -5,6 +5,7 @@ Endpoints:
   GET    /api/reports                  – List all uploaded documents with their single latest generated report
   GET    /api/reports/{run_id}         – Stream or download the generated PDF report (inline by default, attachment if download=true)
   GET    /api/reports/{run_id}/summary – Retrieve full structured JSON summary for a run
+  PATCH  /api/reports/{run_id}/status  – Manually update report verification status (e.g. human reviewer approval)
   GET    /api/documents/{doc_id}       – Retrieve raw document manifest (JSON)
   GET    /api/documents/{doc_id}/pdf   – Stream the original source PDF for preview (inline by default, attachment if download=true)
   DELETE /api/documents/{doc_id}       – Delete a document, its extracted assets, and its generated report
@@ -321,6 +322,30 @@ def get_run_summary(run_id: str):
     }
 
 
+@app.patch("/api/reports/{run_id}/status")
+def update_report_status(
+    run_id: str,
+    status: str = Query(..., description="Status: 'complete' (Verified) or 'needs_review'")
+):
+    """Allows human reviewers/analysts to manually approve/verify a report and update its status."""
+    if status not in ("complete", "needs_review"):
+        raise HTTPException(400, "Invalid status. Must be 'complete' or 'needs_review'.")
+
+    store = SQLiteResearchStore()
+    with _get_db() as con:
+        row = con.execute("SELECT id FROM runs WHERE id=?", (run_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Report run not found.")
+
+    store.update_run_status(run_id, status)
+    return {
+        "success": True,
+        "run_id": run_id,
+        "status": status,
+        "message": f"Report status updated to '{status}'.",
+    }
+
+
 @app.get("/api/documents/{document_id}/pdf")
 def get_original_pdf(document_id: str, download: bool = Query(False, description="Set to true to force attachment download")):
     """Stream the original source PDF for in-browser preview (inline by default)."""
@@ -424,7 +449,6 @@ def get_document(document_id: str):
 @app.get("/api/stats")
 def get_stats():
     """Return platform overview stats based on currently uploaded documents."""
-    # Count only documents with uploaded source files
     reports_data = list_reports()
     docs = reports_data.get("documents", [])
     

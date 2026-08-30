@@ -422,21 +422,34 @@
             <h3 class="text-base font-bold text-white flex items-center space-x-2">
               <span id="modalCompanyName">Company Name</span>
               <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700" id="modalPeriodBadge">Q2-FY26</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider" id="modalStatusBadge">Verified</span>
             </h3>
             <p class="text-xs text-slate-400" id="modalSectorSubtitle">Financial Intelligence Report</p>
           </div>
         </div>
 
         <div class="flex items-center space-x-2">
-          <!-- Download Button (Explicit download only) -->
+          <!-- Manual Review / Verification Toggle Button -->
+          <button 
+            id="modalToggleStatusBtn" 
+            onclick="toggleActiveReportStatus()" 
+            class="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition"
+          >
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+            <span id="modalToggleStatusText">Approve & Verify</span>
+          </button>
+
+          <!-- Download Button -->
           <a id="modalDownloadPdfBtn" href="#" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center space-x-1.5 transition">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
             <span>Download PDF</span>
           </a>
+
           <!-- Delete from inside modal -->
           <button id="modalDeleteDocBtn" onclick="deleteActiveDocument()" class="p-1.5 rounded-lg bg-surface-800 hover:bg-rose-950/80 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 transition" title="Delete Document & Report">
             <i data-lucide="trash-2" class="w-4 h-4"></i>
           </button>
+
           <button onclick="closeModal('reportModal')" class="p-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-400 hover:text-white transition">
             <i data-lucide="x" class="w-5 h-5"></i>
           </button>
@@ -534,7 +547,6 @@
         </div>
 
         <div class="flex items-center space-x-2">
-          <!-- Download Button (Explicit download only) -->
           <a id="origPdfModalDownloadBtn" href="#" class="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition">
             <i data-lucide="download" class="w-3.5 h-3.5"></i>
             <span>Download Original</span>
@@ -824,9 +836,13 @@
                 </div>
 
                 <div class="flex items-center space-x-1.5">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
-                    ${isComplete ? 'Verified' : 'Review'}
-                  </span>
+                  <button 
+                    onclick="toggleQuickStatus('${latest.run_id}', '${latest.status}')"
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900' : 'bg-amber-950 text-amber-400 border border-amber-800 hover:bg-amber-900'}"
+                    title="Click to toggle verification status"
+                  >
+                    ${isComplete ? '✓ Verified' : '⚠ Review'}
+                  </button>
                   <button 
                     onclick="promptDeleteDocument('${doc.document_id}', '${escapeHtml(doc.company_name || doc.filename)}')" 
                     class="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 transition" 
@@ -849,7 +865,6 @@
 
             <!-- Card Bottom Actions -->
             <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
-              <!-- View Report: Opens in Modal (NO download) -->
               <button 
                 type="button"
                 onclick="openReportModal('${latest.run_id}')"
@@ -859,7 +874,6 @@
                 <span>View Report</span>
               </button>
 
-              <!-- Explicit Download Button -->
               <a 
                 href="${latest.download_url || latest.report_url + '?download=true'}" 
                 class="p-2 rounded-lg bg-surface-800 hover:bg-surface-700 text-slate-300 hover:text-white transition" 
@@ -869,7 +883,6 @@
               </a>
 
               ${doc.has_original_pdf ? `
-                <!-- Preview Original Button -->
                 <button 
                   type="button"
                   onclick="openOriginalPdfModal('${doc.document_id}', '${escapeHtml(doc.filename)}')" 
@@ -879,7 +892,6 @@
                   <i data-lucide="eye" class="w-4 h-4"></i>
                 </button>
 
-                <!-- Side-by-Side Comparator Button -->
                 <button 
                   type="button"
                   onclick="openSideBySideModal('${latest.run_id}', '${doc.document_id}')" 
@@ -916,9 +928,13 @@
               <div class="text-[11px] text-slate-400">${escapeHtml(latest.sector || '-')}</div>
             </td>
             <td class="py-3 px-4">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}">
-                ${isComplete ? 'Complete' : 'Needs Review'}
-              </span>
+              <button 
+                onclick="toggleQuickStatus('${latest.run_id}', '${latest.status}')"
+                class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900' : 'bg-amber-950 text-amber-400 border border-amber-800 hover:bg-amber-900'}"
+                title="Click to toggle status"
+              >
+                ${isComplete ? '✓ Verified' : '⚠ Review'}
+              </button>
             </td>
             <td class="py-3 px-4 text-[11px] max-w-xs truncate">
               ${metricsSummary}
@@ -1048,6 +1064,43 @@
     }
 
     // =========================================================================
+    // STATUS TOGGLE & APPROVAL HANDLERS
+    // =========================================================================
+
+    async function toggleActiveReportStatus() {
+      if (!state.activeRunDetails) return;
+      const runId = state.activeRunDetails.run_id;
+      const currentStatus = state.activeRunDetails.status || 'needs_review';
+      const targetStatus = currentStatus === 'complete' ? 'needs_review' : 'complete';
+
+      try {
+        const res = await fetch(`/api/reports/${runId}/status?status=${targetStatus}`, { method: 'PATCH' });
+        if (res.ok) {
+          state.activeRunDetails.status = targetStatus;
+          if (state.activeRunDetails.data) state.activeRunDetails.data.status = targetStatus;
+          populateReportModal(state.activeRunDetails);
+          await fetchReports();
+        } else {
+          alert('Failed to update verification status.');
+        }
+      } catch (err) {
+        console.error('Error updating status:', err);
+      }
+    }
+
+    async function toggleQuickStatus(runId, currentStatus) {
+      const targetStatus = currentStatus === 'complete' ? 'needs_review' : 'complete';
+      try {
+        const res = await fetch(`/api/reports/${runId}/status?status=${targetStatus}`, { method: 'PATCH' });
+        if (res.ok) {
+          await fetchReports();
+        }
+      } catch (err) {
+        console.error('Error updating status:', err);
+      }
+    }
+
+    // =========================================================================
     // DELETE & CLEAR ALL HANDLERS
     // =========================================================================
 
@@ -1116,7 +1169,6 @@
       }
     }
 
-    // 1. OPEN REPORT MODAL (Opens Interactive UI, does NOT trigger automatic download)
     async function openReportModal(runId) {
       const modal = document.getElementById('reportModal');
       modal.classList.remove('hidden');
@@ -1139,6 +1191,7 @@
       const ctx = data.business_context || {};
       const mapping = data.template_mapping || {};
       const llmSum = data.llm_summary || {};
+      const isComplete = payload.status === 'complete';
 
       const company = ctx.company || data.company_name || 'Company Research Report';
       document.getElementById('modalCompanyName').innerText = company;
@@ -1146,7 +1199,23 @@
       document.getElementById('modalPeriodBadge').innerText = ctx.period || 'Latest Disclosures';
       document.getElementById('modalSectorSubtitle').innerText = `${ctx.sector || 'Financial Analysis'} · ${ctx.document_type || 'Filing'}`;
 
-      // PDF links: Inline for iframe view, download=true for explicit download button
+      // Status Badge
+      const statusBadge = document.getElementById('modalStatusBadge');
+      statusBadge.innerText = isComplete ? '✓ Verified' : '⚠ Needs Review';
+      statusBadge.className = `text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${isComplete ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'}`;
+
+      // Status Toggle Button
+      const toggleBtn = document.getElementById('modalToggleStatusBtn');
+      const toggleText = document.getElementById('modalToggleStatusText');
+      if (isComplete) {
+        toggleText.innerText = 'Mark as Needs Review';
+        toggleBtn.className = 'px-3 py-1.5 rounded-lg bg-surface-850 hover:bg-amber-950/80 text-slate-300 hover:text-amber-400 border border-slate-700 hover:border-amber-800 text-xs font-semibold flex items-center space-x-1.5 transition';
+      } else {
+        toggleText.innerText = 'Approve & Verify';
+        toggleBtn.className = 'px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/40 text-xs font-semibold flex items-center space-x-1.5 transition';
+      }
+
+      // PDF links
       const inlinePdfUrl = `/api/reports/${payload.run_id}`;
       const downloadPdfUrl = `/api/reports/${payload.run_id}?download=true`;
 
@@ -1218,7 +1287,7 @@
       renderModalCharts(data.chart_specs || []);
 
       // Audit Tab
-      document.getElementById('modalAuditStatus').innerText = payload.status || 'complete';
+      document.getElementById('modalAuditStatus').innerText = isComplete ? 'Complete (Verified)' : 'Needs Review';
       document.getElementById('modalAuditDocId').innerText = payload.document_id || '-';
       document.getElementById('modalAuditRunId').innerText = payload.run_id || '-';
       const flags = data.quality_flags || [];
